@@ -1,0 +1,16 @@
+exclude: '^\.idea'
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+        args: [--allow-multiple-documents, "--unsafe"]
+      - id: check-json
+      - id: pretty-format-json
+        args: [--autofix]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.6.25
+    hooks:
+      - id: actionlint
