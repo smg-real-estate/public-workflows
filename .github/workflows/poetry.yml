@@ -40,6 +40,9 @@ on:
       SSH_KEY:
         required: false
         description: Private SSH key to use by default (e.g. for git+ssh://)
+      CODECOV_TOKEN:
+        required: false
+        description: coodecov.io token for uploading coverage reports
 
 env:
   PRE_COMMIT_HOME: /tmp/.cache/pre-commit
@@ -116,3 +119,9 @@ jobs:
           && poetry show \
           && pip3 freeze \
           && (cat "${PRE_COMMIT_HOME}/pre-commit.log" || echo "No pre-commit logs")
+
+      - name: codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          if: ${{ env.CODECOV_TOKEN }}

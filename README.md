@@ -1,6 +1,6 @@
 # Collection of GitHub workflows
 
-### poetry.yml
+### poetry.yml workflow
 
 A [Poetry](https://python-poetry.org/)-based workflow that runs jobs in a custom Docker image.
 This workflow provides a job `scripts`, that checks out a project, installs its dependencies
@@ -22,3 +22,8 @@ If you specify `image_name`, don't forget to provide `DOCKER_USERNAME` and `DOCK
 
 In addition, if you provide `SSH_KEY` secret, it will be added as a private SSH key to the home folder.
 You can use this to install dependencies from private GitHub repositories or other private servers.
+
+#### Codecov support in poetry.yml workflow
+
+You can add Codecov.io support by specifying `CODECOV_TOKEN` secret and making sure you run
+`pytest --cov ...` somewhere in your `poetry_scripts`.
