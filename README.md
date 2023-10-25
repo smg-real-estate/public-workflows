@@ -13,7 +13,7 @@ scripts.
 It has the following inputs to control its behaviour:
 - `image_name` - Docker image for the job container
 - `image_options` -  Options to pass to Docker
-- `poetry_scripts` - List of scripts to run, e.G. `'["poe lint-all", "poe test-unit"]'`
+- `poetry_scripts` - List of scripts to run, e.g. `'["poe lint-all", "poe test-unit"]'`
 - `debug` - Use this boolean input to troubleshoot poetry dependencies installation with richer log output
 - `home` - Allows to override the value of $HOME environment variable, which is set by GitHub when running
     jobs in a custom Docker image
