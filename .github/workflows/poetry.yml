@@ -1,4 +1,6 @@
-name: Provides Poetry dependencies, lints code with pre-commit and runs unit tests
+name: Poetry
+# Provides Poetry dependencies, runs scripts with poetry (e.g. linting with pre-commit
+# running unit tests, etc.)
 
 on:
   workflow_call:
@@ -39,7 +41,7 @@ on:
         description: Password for accessing Docker Hub
       SSH_KEY:
         required: false
-        description: Private SSH key to use by default (e.g. for git+ssh://)
+        description: Private SSH key to use by default (e.g. for git+ssh:// access)
       CODECOV_TOKEN:
         required: false
         description: coodecov.io token for uploading coverage reports
