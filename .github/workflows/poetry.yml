@@ -65,7 +65,7 @@ jobs:
 
       - run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version-file: 'pyproject.toml'
           cache: 'poetry'
@@ -88,7 +88,7 @@ jobs:
         if: ${{ inputs.debug }}
         run: poetry install --no-root -vvv
 
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v7
         name: run-scripts
         id: run-scripts
         if: inputs.poetry_scripts
@@ -121,7 +121,7 @@ jobs:
           && (cat "${PRE_COMMIT_HOME}/pre-commit.log" || echo "No pre-commit logs")
 
       - name: codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           if: ${{ env.CODECOV_TOKEN }}
