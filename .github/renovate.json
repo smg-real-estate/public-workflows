@@ -1,0 +1,15 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>smg-real-estate/re-renovate-bot:smg.json5",
+    "github>smg-real-estate/re-renovate-bot//teams/arctic-foxes.json5"
+  ],
+  "packageRules": [
+    {
+      "matchDepTypes": [
+        "action"
+      ],
+      "pinDigests": false
+    }
+  ]
+}
