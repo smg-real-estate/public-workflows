@@ -25,6 +25,13 @@ on:
         type: boolean
         default: false
 
+      github_app_id:
+        required: false
+        type: string
+        description: GitHub app to pass credentials for. They are passed as build arguments
+          GITHUB_USER and GITHUB_TOKEN when building the image
+        default: false
+
       home:
         required: false
         type: string
@@ -37,6 +44,9 @@ on:
       DOCKER_PASSWORD:
         required: true
         description: Password for accessing Docker Hub
+      github_app_private_key:
+        required: false
+        description: GitHub app private key that is used to get app token
       SSH_KEY:
         required: false
         description: Private SSH key to use by default (e.g. for git+ssh://)
@@ -79,6 +89,23 @@ jobs:
         uses: dym-ok/inject-ssh-key@v2
         with:
           private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Get token
+        if: ${{ inputs.github_app_id }}
+        id: gh_token
+        uses: getsentry/action-github-app-token@d4b5da6c5e37703f8c3b3e43abb5705b46e159cc # v3
+        with:
+          app_id: ${{ inputs.github_app_id }}
+          private_key: ${{ secrets.github_app_private_key }}
+
+      - name: Add GitHub token
+        id: add-token
+        if: ${{ inputs.github_app_id }}
+        env:
+          GITHUB_USER: x-access-token
+          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
+        run: |
+          git config --global url."https://${GITHUB_USER}:${GITHUB_TOKEN}@github".insteadOf "https://github"
 
       - name: install
         if: ${{ ! inputs.debug }}
