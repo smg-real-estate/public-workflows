@@ -121,7 +121,7 @@ jobs:
           && (cat "${PRE_COMMIT_HOME}/pre-commit.log" || echo "No pre-commit logs")
 
       - name: codecov
-        uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          if: ${{ env.CODECOV_TOKEN }}
+        if: ${{ env.CODECOV_TOKEN }}
+        uses: codecov/codecov-action@v4
