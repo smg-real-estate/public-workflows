@@ -3,6 +3,11 @@ name: Keep the versions up-to-date
 on:
   release:
     types: [published, edited]
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/versioning.yml'
 
 permissions:
   contents: write
@@ -11,6 +16,12 @@ jobs:
   actions-tagger:
     runs-on: ubuntu-latest
     steps:
+      - name: get token
+        id: token
+        uses: actions/create-github-app-token@f2acddfb5195534d487896a656232b016a682f3c # v1
+        with:
+         app-id: ${{ vars.RELEASER_APP_ID }}
+         private-key: ${{ secrets.RELEASER_APP_KEY }}
       - uses: Actions-R-Us/actions-tagger@330ddfac760021349fef7ff62b372f2f691c20fb # v2
         with:
-          token: ${{ secrets.VERSIONING_TOKEN }}
+          token: ${{ steps.token.outputs.token }}
