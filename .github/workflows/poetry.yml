@@ -93,10 +93,10 @@ jobs:
       - name: Get token
         if: ${{ inputs.github_app_id }}
         id: gh_token
-        uses: getsentry/action-github-app-token@d4b5da6c5e37703f8c3b3e43abb5705b46e159cc # v3
+        uses: actions/create-github-app-token@f2acddfb5195534d487896a656232b016a682f3c # v1
         with:
-          app_id: ${{ inputs.github_app_id }}
-          private_key: ${{ secrets.github_app_private_key }}
+          app-id: ${{ inputs.github_app_id }}
+          private-key: ${{ secrets.github_app_private_key }}
 
       - name: Add GitHub token
         id: add-token
