@@ -30,7 +30,6 @@ on:
         type: string
         description: GitHub app to pass credentials for. They are passed as build arguments
           GITHUB_USER and GITHUB_TOKEN when building the image
-        default: false
 
       coverage_artifact_id:
         required: false
