@@ -47,6 +47,11 @@ on:
         type: string
         description: Home folder location
 
+      pip-contraint:
+        required: false
+        type: string
+        description: Path to pip constraint file
+
     secrets:
       DOCKER_USERNAME:
         required: true
@@ -72,6 +77,8 @@ jobs:
   scripts:
     name: Script
     runs-on: ubuntu-latest
+    env:
+      PIP_CONSTRAINT: ${{ inputs.pip-contraint }}
     container:
       image: ${{ inputs.image_name }}
       options: ${{ inputs.image_options }}
