@@ -52,6 +52,11 @@ on:
         type: string
         description: Path to pip constraint file
 
+      pre-install:
+        required: false
+        type: string
+        description: Command to run before installing dependencies
+
     secrets:
       DOCKER_USERNAME:
         required: true
@@ -125,6 +130,9 @@ jobs:
           GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
         run: |
           git config --global url."https://${GITHUB_USER}:${GITHUB_TOKEN}@github".insteadOf "https://github"
+
+      - name: pre-install
+        run: ${{ inputs.pre-install }}
 
       - name: install
         if: ${{ ! inputs.debug }}
