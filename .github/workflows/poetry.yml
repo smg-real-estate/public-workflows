@@ -47,7 +47,7 @@ on:
         type: string
         description: Home folder location
 
-      pip-contraint:
+      pip-constraint:
         required: false
         type: string
         description: Path to pip constraint file
@@ -78,7 +78,7 @@ jobs:
     name: Script
     runs-on: ubuntu-latest
     env:
-      PIP_CONSTRAINT: ${{ inputs.pip-contraint }}
+      PIP_CONSTRAINT: ${{ inputs.pip-constraint }}
     container:
       image: ${{ inputs.image_name }}
       options: ${{ inputs.image_options }}
