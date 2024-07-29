@@ -28,7 +28,8 @@ on:
       github_app_id:
         required: false
         type: string
-        description: GitHub app to pass credentials for. They are passed as build arguments
+        description:
+          GitHub app to pass credentials for. They are passed as build arguments
           GITHUB_USER and GITHUB_TOKEN when building the image
 
       coverage_artifact_id:
@@ -74,6 +75,8 @@ jobs:
     container:
       image: ${{ inputs.image_name }}
       options: ${{ inputs.image_options }}
+      env:
+        PIP_CONSTRAINT: ${{ env.PIP_CONSTRAINT }}
       credentials:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
@@ -86,8 +89,8 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version-file: 'pyproject.toml'
-          cache: 'poetry'
+          python-version-file: "pyproject.toml"
+          cache: "poetry"
           cache-dependency-path: |
             poetry.lock
             .pre-commit-config.yml
