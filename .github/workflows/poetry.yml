@@ -15,6 +15,12 @@ on:
         default: -e NOOP
         description: Options to pass to Docker
 
+      runner:
+        required: false
+        type: string
+        default: ubuntu-latest
+        description: GitHub runners to use
+
       poetry_scripts:
         required: false
         type: string
@@ -81,7 +87,7 @@ env:
 jobs:
   scripts:
     name: Script
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     env:
       PIP_CONSTRAINT: ${{ inputs.pip-constraint }}
     container:
