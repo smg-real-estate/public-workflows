@@ -136,6 +136,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
         run: |
           git config --global url."https://${GITHUB_USER}:${GITHUB_TOKEN}@github".insteadOf "https://github"
+          poetry config experimental.system-git-client true
 
       - name: pre-install
         run: ${{ inputs.pre-install }}
