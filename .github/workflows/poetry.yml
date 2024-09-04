@@ -136,10 +136,14 @@ jobs:
           GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
         run: |
           git config --global url."https://${GITHUB_USER}:${GITHUB_TOKEN}@github".insteadOf "https://github"
-          echo "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com" > "$HOME/.git-credentials" \
-          && git config --global credentials.helper store \
-          && poetry config experimental.system-git-client true
-          grep github pyproject.toml | awk "{print \"poetry config repositories.\"\$1\" \"\$6}" | sed 's/["|,]//g'
+          grep github pyproject.toml \
+          | awk "{print \"poetry config repositories.\"\$1\" \"\$6}" \
+          | sed 's/["|,]//g' \
+          | xargs -L 1 -I {} bash -c "{};" && \
+          grep github pyproject.toml \
+          | awk "{print \"poetry config http-basic.\"\$1\" $GITHUB_USER $GITHUB_TOKEN\"}" \
+          | sed 's/["|,]//g' \
+          | xargs -L 1 -I {} bash -c "{};"
 
       - name: pre-install
         run: ${{ inputs.pre-install }}
