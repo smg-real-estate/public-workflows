@@ -139,6 +139,7 @@ jobs:
           echo "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com" > "$HOME/.git-credentials" \
           && git config --global credentials.helper store \
           && poetry config experimental.system-git-client true
+          grep github pyproject.toml | awk "{print \"poetry config repositories.\"\$1\" \"\$6}" | sed 's/["|,]//g'
 
       - name: pre-install
         run: ${{ inputs.pre-install }}
@@ -185,6 +186,8 @@ jobs:
           && ls -la \
           && poetry --version \
           && poetry env info \
+          && poetry config --list \
+          && git config --global -l \
           && poetry show \
           && pip3 freeze \
           && (cat "${PRE_COMMIT_HOME}/pre-commit.log" || echo "No pre-commit logs")
