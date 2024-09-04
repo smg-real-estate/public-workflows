@@ -153,7 +153,9 @@ jobs:
         env:
           GITHUB_USER: x-access-token
           GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
-        run: poetry install --no-root
+        run: |
+          poetry export -f requirements.txt --output requirements.txt --without-hashes \
+          && poetry run pip install -r requirements.txt
 
       - name: verbose-install
         if: ${{ inputs.debug }}
