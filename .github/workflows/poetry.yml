@@ -19,7 +19,7 @@ on:
         required: false
         type: string
         default: ubuntu-latest
-        description: GitHub runners to use
+        description: GitHub runner for the job
 
       poetry_scripts:
         required: false
@@ -123,10 +123,11 @@ jobs:
       - name: Get token
         if: ${{ inputs.github_app_id }}
         id: gh_token
-        uses: actions/create-github-app-token@31c86eb3b33c9b601a1f60f98dcbfd1d70f379b4 # v1
+        uses: actions/create-github-app-token@3378cda945da322a8db4b193e19d46352ebe2de5 # v1
         with:
           app-id: ${{ inputs.github_app_id }}
           private-key: ${{ secrets.github_app_private_key }}
+          owner: ${{ github.repository_owner }}
 
       - name: Add GitHub token
         id: add-token
@@ -136,16 +137,30 @@ jobs:
           GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
         run: |
           git config --global url."https://${GITHUB_USER}:${GITHUB_TOKEN}@github".insteadOf "https://github"
+          grep github pyproject.toml \
+          | awk "{print \"poetry config repositories.\"\$1\" \"\$6}" \
+          | sed 's/["|,]//g' \
+          | xargs -L 1 -I {} bash -c "{};" && \
+          grep github pyproject.toml \
+          | awk "{print \"poetry config http-basic.\"\$1\" $GITHUB_USER $GITHUB_TOKEN\"}" \
+          | sed 's/["|,]//g' \
+          | xargs -L 1 -I {} bash -c "{};"
 
       - name: pre-install
         run: ${{ inputs.pre-install }}
 
       - name: install
         if: ${{ ! inputs.debug }}
-        run: poetry install --no-root
-
+        env:
+          GITHUB_USER: x-access-token
+          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
+        run: |
+          poetry install --no-root
       - name: verbose-install
         if: ${{ inputs.debug }}
+        env:
+          GITHUB_USER: x-access-token
+          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
         run: poetry install --no-root -vvv
 
       - uses: actions/github-script@v7
@@ -176,6 +191,8 @@ jobs:
           && ls -la \
           && poetry --version \
           && poetry env info \
+          && poetry config --list \
+          && git config --global -l \
           && poetry show \
           && pip3 freeze \
           && (cat "${PRE_COMMIT_HOME}/pre-commit.log" || echo "No pre-commit logs")
