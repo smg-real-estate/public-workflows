@@ -34,3 +34,7 @@ If you need to upload test coverage files to Codecov.io or SonarCloud.io, you ca
 
 - `coverage_artifact_id` - artifact-id for GitHub actions/upload-artifact to store coverage report
 - `coverage_path` - Path to coverage report that will be uploaded with coverage_artifact_id
+
+#### Examples of usage
+
+You can see the examples of usage of the poetry.yml workflow [here](https://github.com/search?q=org%3Asmg-real-estate%20public-workflows%2F.github%2Fworkflows%2Fpoetry.yml&type=code)
