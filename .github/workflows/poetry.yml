@@ -26,6 +26,10 @@ on:
         type: string
         description: List of poetry scripts to run
 
+      python_version:
+        required: false
+        type: string
+
       debug:
         required: false
         type: boolean
@@ -103,7 +107,9 @@ jobs:
       - run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - uses: actions/setup-python@v5
+        if: inputs.python_version != 'default'
         with:
+          python-version: ${{ inputs.python_version }}
           python-version-file: "pyproject.toml"
           cache: "poetry"
           cache-dependency-path: |
