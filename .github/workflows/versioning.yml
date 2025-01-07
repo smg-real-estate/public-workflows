@@ -7,21 +7,21 @@ on:
     branches:
       - main
     paths:
-      - '.github/workflows/versioning.yml'
+      - ".github/workflows/versioning.yml"
 
 permissions:
   contents: write
 
 jobs:
   actions-tagger:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: get token
         id: token
         uses: actions/create-github-app-token@31c86eb3b33c9b601a1f60f98dcbfd1d70f379b4 # v1
         with:
-         app-id: ${{ vars.RELEASER_APP_ID }}
-         private-key: ${{ secrets.RELEASER_APP_KEY }}
+          app-id: ${{ vars.RELEASER_APP_ID }}
+          private-key: ${{ secrets.RELEASER_APP_KEY }}
       - uses: Actions-R-Us/actions-tagger@330ddfac760021349fef7ff62b372f2f691c20fb # v2
         with:
           token: ${{ steps.token.outputs.token }}
