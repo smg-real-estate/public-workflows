@@ -18,7 +18,7 @@ on:
       runner:
         required: false
         type: string
-        default: ubuntu-24.04
+        default: ubuntu-22.04
         description: GitHub runner for the job
 
       poetry_scripts:
