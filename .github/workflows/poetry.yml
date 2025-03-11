@@ -188,6 +188,9 @@ jobs:
         if: failure()
         run: |
           set -v \
+          && echo "============ Git status: ===========" \
+          && git status \
+          && echo "====================================" \
           && (printenv | sort )\
           && id \
           && pwd \
