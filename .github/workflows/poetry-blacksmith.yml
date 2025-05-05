@@ -1,0 +1,214 @@
+name: Provides Poetry dependencies, lints code with pre-commit and runs unit tests
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        required: true
+        type: string
+        description: Docker image for the job container
+
+      image_options:
+        required: false
+        type: string
+        # we don't need any default container options, but it can't be an empty string
+        default: -e NOOP
+        description: Options to pass to Docker
+
+      runner:
+        required: false
+        type: string
+        default: ubuntu-22.04
+        description: GitHub runner for the job
+
+      poetry_scripts:
+        required: false
+        type: string
+        description: List of poetry scripts to run
+
+      python_version:
+        required: false
+        type: string
+
+      debug:
+        required: false
+        type: boolean
+        default: false
+
+      github_app_id:
+        required: false
+        type: string
+        description:
+          GitHub app to pass credentials for. They are passed as build arguments
+          GITHUB_USER and GITHUB_TOKEN when building the image
+
+      coverage_artifact_id:
+        required: false
+        type: string
+        description: artifact-id for GitHub actions/upload-artifact to store coverage report
+
+      coverage_path:
+        required: false
+        type: string
+        description: Path to coverage report that will be uploaded with coverage_artifact_id
+
+      home:
+        required: false
+        type: string
+        description: Home folder location
+
+      pip-constraint:
+        required: false
+        type: string
+        description: Path to pip constraint file
+
+      pre-install:
+        required: false
+        type: string
+        description: Command to run before installing dependencies
+
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+        description: User for accessing Docker Hub
+      DOCKER_PASSWORD:
+        required: true
+        description: Password for accessing Docker Hub
+      github_app_private_key:
+        required: false
+        description: GitHub app private key that is used to get app token
+      SSH_KEY:
+        required: false
+        description: Private SSH key to use by default (e.g. for git+ssh://)
+
+env:
+  PRE_COMMIT_HOME: /tmp/.cache/pre-commit
+  HOME: ${{ inputs.home }}
+
+jobs:
+  scripts:
+    name: Script
+    runs-on: ${{ inputs.runner }}
+    env:
+      PIP_CONSTRAINT: ${{ inputs.pip-constraint }}
+    container:
+      image: ${{ inputs.image_name }}
+      options: ${{ inputs.image_options }}
+      env:
+        PIP_CONSTRAINT: ${{ env.PIP_CONSTRAINT }}
+        BLACKSMITH_CACHE_TOKEN: ${{ env.BLACKSMITH_CACHE_TOKEN }}
+        BLACKSMITH_CACHE_URL: ${{ env.BLACKSMITH_CACHE_URL }}
+        GITHUB_REPO_NAME: ${{ env.GITHUB_REPO_NAME }}
+      credentials:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          set-safe-directory: true
+
+      - run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - uses: useblacksmith/setup-python@v6
+        if: inputs.python_version != 'default'
+        with:
+          python-version: ${{ inputs.python_version }}
+          python-version-file: "pyproject.toml"
+          cache: "poetry"
+          cache-dependency-path: |
+            poetry.lock
+            .pre-commit-config.yml
+
+      - env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        if: ${{ env.SSH_KEY }}
+        uses: dym-ok/inject-ssh-key@v2
+        with:
+          private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Get token
+        if: ${{ inputs.github_app_id }}
+        id: gh_token
+        uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v1
+        with:
+          app-id: ${{ inputs.github_app_id }}
+          private-key: ${{ secrets.github_app_private_key }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Add GitHub token
+        id: add-token
+        if: ${{ inputs.github_app_id }}
+        env:
+          GITHUB_USER: x-access-token
+          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
+        run: |
+          git config --global url."https://${GITHUB_USER}:${GITHUB_TOKEN}@github".insteadOf "https://github"
+          grep github pyproject.toml \
+          | awk "{print \"poetry config repositories.\"\$1\" \"\$6}" \
+          | sed 's/["|,]//g' \
+          | xargs -L 1 -I {} bash -c "{};" && \
+          grep github pyproject.toml \
+          | awk "{print \"poetry config http-basic.\"\$1\" $GITHUB_USER $GITHUB_TOKEN\"}" \
+          | sed 's/["|,]//g' \
+          | xargs -L 1 -I {} bash -c "{};"
+
+      - name: pre-install
+        run: ${{ inputs.pre-install }}
+
+      - name: install
+        if: ${{ ! inputs.debug }}
+        env:
+          GITHUB_USER: x-access-token
+          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
+        run: |
+          poetry install --no-root
+      - name: verbose-install
+        if: ${{ inputs.debug }}
+        env:
+          GITHUB_USER: x-access-token
+          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
+        run: poetry install --no-root -vvv
+
+      - uses: actions/github-script@v7
+        name: run-scripts
+        id: run-scripts
+        if: inputs.poetry_scripts
+        with:
+          script: |
+            const poetry_scripts = '${{ inputs.poetry_scripts }}';
+            const scripts = JSON.parse(poetry_scripts);
+            const workspace = process.env["GITHUB_WORKSPACE"];
+            for (const script of scripts) {
+              console.log(`Running "${script}" in ${workspace}`);
+              options = {
+                  cwd: workspace,
+                  debug: true
+              };
+              await exec.exec( "poetry", [ "run", ...script.split(" ") ], options);
+            }
+
+      - name: debug
+        if: failure()
+        run: |
+          set -v \
+          && echo "============ Git status: ===========" \
+          && git status \
+          && echo "====================================" \
+          && (printenv | sort )\
+          && id \
+          && pwd \
+          && ls -la \
+          && poetry --version \
+          && poetry env info \
+          && poetry config --list \
+          && git config --global -l \
+          && poetry show \
+          && pip3 freeze \
+          && (cat "${PRE_COMMIT_HOME}/pre-commit.log" || echo "No pre-commit logs")
+
+      - name: upload-coverage
+        if: inputs.coverage_artifact_id
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.coverage_artifact_id }}
+          path: ${{ inputs.coverage_path }}
