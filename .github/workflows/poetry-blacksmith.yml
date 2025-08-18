@@ -72,7 +72,7 @@ jobs:
       PIP_CONSTRAINT: ${{ inputs.pip-constraint }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           set-safe-directory: true
 
