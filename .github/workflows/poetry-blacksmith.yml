@@ -95,7 +95,9 @@ jobs:
           python-version: ${{ inputs.python_version }}
           python-version-file: "pyproject.toml"
           cache: "poetry"
-          cache-dependency-path: poetry.lock
+          cache-dependency-path: |
+            pyproject.toml
+            poetry.lock
 
       - uses: useblacksmith/setup-node@v5
         if: inputs.node_version
