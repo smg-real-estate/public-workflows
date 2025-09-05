@@ -14,6 +14,11 @@ on:
         type: string
         description: List of poetry scripts to run
 
+      poetry_extras:
+        required: false
+        type: string
+        description: List of extras to pass to poetry install
+
       python_version:
         required: false
         type: string
@@ -142,18 +147,34 @@ jobs:
         run: ${{ inputs.pre-install }}
 
       - name: install
-        if: ${{ ! inputs.debug }}
+        if: ${{ ! inputs.debug && ! inputs.poetry_extras }}
         env:
           GITHUB_USER: x-access-token
           GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
         run: |
           poetry install --no-root
+
+      - name: install-with-extras
+        if: ${{ ! inputs.debug && inputs.poetry_extras }}
+        env:
+          GITHUB_USER: x-access-token
+          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
+        run: |
+          poetry install --no-root --extras ${{ inputs.poetry_extras }}
+
       - name: verbose-install
-        if: ${{ inputs.debug }}
+        if: ${{ inputs.debug && ! inputs.poetry_extras }}
         env:
           GITHUB_USER: x-access-token
           GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
         run: poetry install --no-root -vvv
+
+      - name: verbose-install-with-extras
+        if: ${{ inputs.debug && inputs.poetry_extras }}
+        env:
+          GITHUB_USER: x-access-token
+          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
+        run: poetry install --no-root -vvv --extras ${{ inputs.poetry_extras }}
 
       - name: Cache pre-commit
         uses: useblacksmith/cache@v5
