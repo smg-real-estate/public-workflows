@@ -182,7 +182,7 @@ jobs:
           path: ~/.cache/pre-commit
           key: ${{runner.os}}-${{runner.arch}}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
 
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         name: run-scripts
         id: run-scripts
         if: inputs.poetry_scripts
