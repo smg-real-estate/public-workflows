@@ -174,7 +174,13 @@ jobs:
         env:
           GITHUB_USER: x-access-token
           GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
-        run: poetry install --no-root -vvv --extras ${{ inputs.poetry_extras }}
+          EXTRAS: ${{ inputs.poetry_extras }}
+        run: |
+          if [ "${EXTRAS}" = "all" ]; then
+            poetry install --no-root -vvv --all-extras
+          else
+            poetry install --no-root -vvv --extras "${EXTRAS}"
+          fi
 
       - name: Cache pre-commit
         uses: useblacksmith/cache@v5
