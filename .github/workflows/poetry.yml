@@ -169,8 +169,13 @@ jobs:
         env:
           GITHUB_USER: x-access-token
           GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
+          EXTRAS: ${{ inputs.poetry_extras }}
         run: |
-          poetry install --no-root --extras ${{ inputs.poetry_extras }}
+          if [ "${EXTRAS}" = "all" ]; then
+            poetry install --no-root --all-extras
+          else
+            poetry install --no-root --extras "${EXTRAS}"
+          fi
 
       - name: verbose-install
         if: ${{ inputs.debug && ! inputs.poetry_extras }}
