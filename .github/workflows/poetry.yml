@@ -87,7 +87,7 @@ on:
       stage:
         required: false
         type: string
-        description: Targe stage (environment)
+        description: Target stage (environment)
 
     secrets:
       DD_API_KEY:
