@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       image_name:
-        required: true
+        required: false
         type: string
         description: Docker image for the job container
 
@@ -93,10 +93,10 @@ on:
       DD_API_KEY:
         required: false
       DOCKER_USERNAME:
-        required: true
+        required: false
         description: User for accessing Docker Hub
       DOCKER_PASSWORD:
-        required: true
+        required: false
         description: Password for accessing Docker Hub
       github_app_private_key:
         required: false
