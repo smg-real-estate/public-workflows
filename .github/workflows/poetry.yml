@@ -3,18 +3,6 @@ name: Provides Poetry dependencies, lints code with pre-commit and runs unit tes
 on:
   workflow_call:
     inputs:
-      image_name:
-        required: false
-        type: string
-        description: Docker image for the job container
-
-      image_options:
-        required: false
-        type: string
-        # we don't need any default container options, but it can't be an empty string
-        default: -e NOOP
-        description: Options to pass to Docker
-
       runner:
         required: false
         type: string
@@ -92,12 +80,6 @@ on:
     secrets:
       DD_API_KEY:
         required: false
-      DOCKER_USERNAME:
-        required: false
-        description: User for accessing Docker Hub
-      DOCKER_PASSWORD:
-        required: false
-        description: Password for accessing Docker Hub
       github_app_private_key:
         required: false
         description: GitHub app private key that is used to get app token
@@ -115,15 +97,6 @@ jobs:
     runs-on: ${{ inputs.runner }}
     env:
       PIP_CONSTRAINT: ${{ inputs.pip-constraint }}
-    container:
-      image: ${{ inputs.image_name }}
-      options: ${{ inputs.image_options }}
-      env:
-        PIP_CONSTRAINT: ${{ env.PIP_CONSTRAINT }}
-        PRE_COMMIT_HOME: ${{ env.PRE_COMMIT_HOME }}
-      credentials:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
     steps:
       - uses: actions/checkout@v6
         with:
