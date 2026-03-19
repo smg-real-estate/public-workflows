@@ -34,6 +34,12 @@ on:
       python_version:
         required: false
         type: string
+        description: Python version to install with setup-python
+
+      node_version:
+        required: false
+        type: string
+        description: NodeJS version to install with setup-node
 
       debug:
         required: false
@@ -57,6 +63,12 @@ on:
         type: string
         description: Path to coverage report that will be uploaded with coverage_artifact_id
 
+      datadog_tags:
+        required: false
+        type: boolean
+        description: Whether to run Datadog tagging step
+        default: false
+
       home:
         required: false
         type: string
@@ -72,7 +84,14 @@ on:
         type: string
         description: Command to run before installing dependencies
 
+      stage:
+        required: false
+        type: string
+        description: Target stage (environment)
+
     secrets:
+      DD_API_KEY:
+        required: false
       DOCKER_USERNAME:
         required: true
         description: User for accessing Docker Hub
@@ -112,13 +131,27 @@ jobs:
 
       - run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
+      - name: Tag Job
+        if: ${{ inputs.datadog_tags }}
+        uses: smg-real-estate/.github-ts/.github/actions/datadog-tag-job@v1.6.0
+        with:
+          datadog-api-key: ${{ secrets.DD_API_KEY }}
+          additional-tags: "env:${{ case(github.ref == 'refs/heads/main', inputs.stage, 'dev') }}"
+
       - uses: actions/setup-python@v6
         if: inputs.python_version != 'default'
         with:
           python-version: ${{ inputs.python_version }}
           python-version-file: "pyproject.toml"
           cache: "poetry"
-          cache-dependency-path: poetry.lock
+          cache-dependency-path: |
+            pyproject.toml
+            poetry.lock
+
+      - uses: actions/setup-node@v4
+        if: inputs.node_version
+        with:
+          node-version: ${{ inputs.node_version }}
 
       - env:
           SSH_KEY: ${{ secrets.SSH_KEY }}
@@ -154,6 +187,7 @@ jobs:
           | xargs -L 1 -I {} bash -c "{};"
 
       - name: pre-install
+        if: ${{ inputs.pre-install }}
         run: ${{ inputs.pre-install }}
 
       - name: install
@@ -201,7 +235,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ env.PRE_COMMIT_HOME }}
-          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+          key: ${{runner.os}}-${{runner.arch}}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
 
       - uses: actions/github-script@v8
         name: run-scripts
