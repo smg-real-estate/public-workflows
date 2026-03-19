@@ -14,10 +14,11 @@ on:
         type: string
         description: List of poetry scripts to run
 
-      poetry_extras:
+      poetry_args:
         required: false
         type: string
-        description: List of extras to pass to poetry install
+        description: Custom arguments for Poetry package manager
+        default: --no-root
 
       python_version:
         required: false
@@ -57,11 +58,6 @@ on:
         description: Whether to run Datadog tagging step
         default: false
 
-      home:
-        required: false
-        type: string
-        description: Home folder location
-
       pip-constraint:
         required: false
         type: string
@@ -89,7 +85,6 @@ on:
 
 env:
   PRE_COMMIT_HOME: /tmp/.cache/pre-commit
-  HOME: ${{ inputs.home }}
 
 jobs:
   scripts:
@@ -97,6 +92,7 @@ jobs:
     runs-on: ${{ inputs.runner }}
     env:
       PIP_CONSTRAINT: ${{ inputs.pip-constraint }}
+      POETRY_HOME: /opt/poetry
     steps:
       - uses: actions/checkout@v6
         with:
@@ -110,6 +106,9 @@ jobs:
         with:
           datadog-api-key: ${{ secrets.DD_API_KEY }}
           additional-tags: "env:${{ case(github.ref == 'refs/heads/main', inputs.stage, 'dev') }}"
+
+      - name: Install poetry
+        run: pipx install poetry==2.3.2
 
       - uses: actions/setup-python@v6
         if: inputs.python_version != 'default'
@@ -164,45 +163,11 @@ jobs:
         run: ${{ inputs.pre-install }}
 
       - name: install
-        if: ${{ ! inputs.debug && ! inputs.poetry_extras }}
         env:
           GITHUB_USER: x-access-token
           GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
         run: |
-          poetry install --no-root
-
-      - name: install-with-extras
-        if: ${{ ! inputs.debug && inputs.poetry_extras }}
-        env:
-          GITHUB_USER: x-access-token
-          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
-          EXTRAS: ${{ inputs.poetry_extras }}
-        run: |
-          if [ "${EXTRAS}" = "all" ]; then
-            poetry install --no-root --all-extras
-          else
-            poetry install --no-root --extras "${EXTRAS}"
-          fi
-
-      - name: verbose-install
-        if: ${{ inputs.debug && ! inputs.poetry_extras }}
-        env:
-          GITHUB_USER: x-access-token
-          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
-        run: poetry install --no-root -vvv
-
-      - name: verbose-install-with-extras
-        if: ${{ inputs.debug && inputs.poetry_extras }}
-        env:
-          GITHUB_USER: x-access-token
-          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
-          EXTRAS: ${{ inputs.poetry_extras }}
-        run: |
-          if [ "${EXTRAS}" = "all" ]; then
-            poetry install --no-root -vvv --all-extras
-          else
-            poetry install --no-root -vvv --extras "${EXTRAS}"
-          fi
+          poetry install ${{ inputs.poetry_args }}
 
       - name: Cache pre-commit
         uses: actions/cache@v5
