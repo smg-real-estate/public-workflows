@@ -34,6 +34,12 @@ on:
       python_version:
         required: false
         type: string
+        description: Python version to install with setup-python
+
+      node_version:
+        required: false
+        type: string
+        description: NodeJS version to install with setup-node
 
       debug:
         required: false
@@ -118,7 +124,14 @@ jobs:
           python-version: ${{ inputs.python_version }}
           python-version-file: "pyproject.toml"
           cache: "poetry"
-          cache-dependency-path: poetry.lock
+          cache-dependency-path: |
+            pyproject.toml
+            poetry.lock
+
+      - uses: actions/setup-node@v4
+        if: inputs.node_version
+        with:
+          node-version: ${{ inputs.node_version }}
 
       - env:
           SSH_KEY: ${{ secrets.SSH_KEY }}
@@ -154,6 +167,7 @@ jobs:
           | xargs -L 1 -I {} bash -c "{};"
 
       - name: pre-install
+        if: ${{ inputs.pre-install }}
         run: ${{ inputs.pre-install }}
 
       - name: install
@@ -201,7 +215,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ env.PRE_COMMIT_HOME }}
-          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+          key: ${{runner.os}}-${{runner.arch}}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
 
       - uses: actions/github-script@v8
         name: run-scripts
