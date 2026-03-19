@@ -63,6 +63,12 @@ on:
         type: string
         description: Path to coverage report that will be uploaded with coverage_artifact_id
 
+      datadog_tags:
+        required: false
+        type: boolean
+        description: Whether to run Datadog tagging step
+        default: false
+
       home:
         required: false
         type: string
@@ -78,7 +84,14 @@ on:
         type: string
         description: Command to run before installing dependencies
 
+      stage:
+        required: false
+        type: string
+        description: Targe stage (environment)
+
     secrets:
+      DD_API_KEY:
+        required: false
       DOCKER_USERNAME:
         required: true
         description: User for accessing Docker Hub
@@ -117,6 +130,13 @@ jobs:
           set-safe-directory: true
 
       - run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - name: Tag Job
+        if: ${{ inputs.datadog_tags }}
+        uses: smg-real-estate/.github-ts/.github/actions/datadog-tag-job@v1.6.0
+        with:
+          datadog-api-key: ${{ secrets.DD_API_KEY }}
+          additional-tags: "env:${{ case(github.ref == 'refs/heads/main', inputs.stage, 'dev') }}"
 
       - uses: actions/setup-python@v6
         if: inputs.python_version != 'default'
