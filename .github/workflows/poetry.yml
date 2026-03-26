@@ -102,7 +102,7 @@ jobs:
 
       - name: Tag Job
         if: ${{ inputs.datadog_tags }}
-        uses: smg-real-estate/.github-ts/.github/actions/datadog-tag-job@v1.6.0
+        uses: smg-real-estate/.github-ts/.github/actions/datadog-tag-job@v1.7.8
         with:
           datadog-api-key: ${{ secrets.DD_API_KEY }}
           additional-tags: "env:${{ case(github.ref == 'refs/heads/main', inputs.stage, 'dev') }}"
