@@ -1,0 +1,194 @@
+name: Provides uv dependencies, lints code with pre-commit and runs unit tests
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        required: false
+        type: string
+        default: ubuntu-22.04
+        description: GitHub runner for the job
+
+      uv_scripts:
+        required: false
+        type: string
+        description: List of scripts to run with uv run
+
+      uv_args:
+        required: false
+        type: string
+        description: Custom arguments for uv dependency sync
+        default: --frozen
+
+      python_version:
+        required: false
+        type: string
+        description: Python version to install with setup-python
+
+      node_version:
+        required: false
+        type: string
+        description: NodeJS version to install with setup-node
+
+      debug:
+        required: false
+        type: boolean
+        default: false
+
+      github_app_id:
+        required: false
+        type: string
+        description:
+          GitHub app to pass credentials for. They are passed as build arguments
+          GITHUB_USER and GITHUB_TOKEN when building the image
+
+      coverage_artifact_id:
+        required: false
+        type: string
+        description: artifact-id for GitHub actions/upload-artifact to store coverage report
+
+      coverage_path:
+        required: false
+        type: string
+        description: Path to coverage report that will be uploaded with coverage_artifact_id
+
+      datadog_tags:
+        required: false
+        type: boolean
+        description: Whether to run Datadog tagging step
+        default: false
+
+      pip-constraint:
+        required: false
+        type: string
+        description: Path to pip constraint file
+
+      pre-install:
+        required: false
+        type: string
+        description: Command to run before installing dependencies
+
+      stage:
+        required: false
+        type: string
+        description: Target stage (environment)
+
+    secrets:
+      DD_API_KEY:
+        required: false
+      github_app_private_key:
+        required: false
+        description: GitHub app private key that is used to get app token
+
+env:
+  PRE_COMMIT_HOME: /tmp/.cache/pre-commit
+
+jobs:
+  scripts:
+    name: Script
+    runs-on: ${{ inputs.runner }}
+    env:
+      PIP_CONSTRAINT: ${{ inputs.pip-constraint }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          set-safe-directory: true
+
+      - run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - name: Tag Job
+        if: ${{ inputs.datadog_tags }}
+        uses: smg-real-estate/.github-ts/.github/actions/datadog-tag-job@v1.7.8
+        with:
+          datadog-api-key: ${{ secrets.DD_API_KEY }}
+          additional-tags: "env:${{ case(github.ref == 'refs/heads/main', inputs.stage, 'dev') }}"
+
+      - uses: actions/setup-python@v6
+        if: inputs.python_version != 'default'
+        with:
+          python-version: ${{ inputs.python_version }}
+          python-version-file: "pyproject.toml"
+          cache: "pip"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-node@v6
+        if: inputs.node_version
+        with:
+          node-version: ${{ inputs.node_version }}
+
+      - name: Get token
+        if: ${{ inputs.github_app_id }}
+        id: gh_token
+        uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v1
+        with:
+          app-id: ${{ inputs.github_app_id }}
+          private-key: ${{ secrets.github_app_private_key }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Add GitHub token
+        id: add-token
+        if: ${{ inputs.github_app_id }}
+        env:
+          GITHUB_USER: x-access-token
+          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
+        run: |
+          git config --global url."https://${GITHUB_USER}:${GITHUB_TOKEN}@github".insteadOf "https://github"
+
+      - name: pre-install
+        if: ${{ inputs.pre-install }}
+        run: ${{ inputs.pre-install }}
+
+      - name: Cache pre-commit
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.PRE_COMMIT_HOME }}
+          key: ${{runner.os}}-${{runner.arch}}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - uses: actions/github-script@v8
+        name: run-scripts
+        id: run-scripts
+        env:
+          GITHUB_USER: x-access-token
+          GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
+        if: inputs.uv_scripts
+        with:
+          script: |
+            const uv_scripts = '${{ inputs.uv_scripts }}';
+            const scripts = JSON.parse(uv_scripts);
+            const workspace = process.env["GITHUB_WORKSPACE"];
+            for (const script of scripts) {
+              console.log(`Running "${script}" in ${workspace}`);
+              options = {
+                  cwd: workspace,
+                  debug: true
+              };
+              await exec.exec( "uv", [ "run", "--frozen", ...script.split(" ") ], options);
+            }
+
+      - name: debug
+        if: failure()
+        run: |
+          set -v \
+          && echo "============ Git status: ===========" \
+          && git status \
+          && echo "====================================" \
+          && (printenv | sort )\
+          && id \
+          && pwd \
+          && ls -la \
+          && uv --version \
+          && git config --global -l \
+          && uv tree \
+          && uv pip freeze \
+          && (cat "${PRE_COMMIT_HOME}/pre-commit.log" || echo "No pre-commit logs")
+
+      - name: upload-coverage
+        if: inputs.coverage_artifact_id
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.coverage_artifact_id }}
+          path: ${{ inputs.coverage_path }}
