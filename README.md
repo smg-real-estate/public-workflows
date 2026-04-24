@@ -38,3 +38,9 @@ If you need to upload test coverage files to Codecov.io or SonarCloud.io, you ca
 #### Examples of usage
 
 You can see the examples of usage of the poetry.yml workflow [here](https://github.com/search?q=org%3Asmg-real-estate%20public-workflows%2F.github%2Fworkflows%2Fpoetry.yml&type=code)
+
+### uv.yml workflow
+
+A [uv](https://docs.astral.sh/uv/)-based workflow that mirrors the callable `poetry.yml` interface,
+installs dependencies with `uv sync`, and optionally runs scripts provided in the `uv_scripts`
+input via `uv run`.
