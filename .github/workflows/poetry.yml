@@ -93,6 +93,7 @@ jobs:
     env:
       PIP_CONSTRAINT: ${{ inputs.pip-constraint }}
       POETRY_HOME: /opt/poetry
+      POETRY_SYSTEM_GIT_CLIENT: true
     steps:
       - uses: actions/checkout@v6
         with:
@@ -108,7 +109,7 @@ jobs:
           additional-tags: "env:${{ case(github.ref == 'refs/heads/main', inputs.stage, 'dev') }}"
 
       - name: Install poetry
-        run: pipx install poetry==2.3.2
+        run: pipx install poetry==2.3.3
 
       - uses: actions/setup-python@v6
         if: inputs.python_version != 'default'
