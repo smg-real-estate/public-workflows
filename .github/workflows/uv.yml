@@ -58,6 +58,16 @@ on:
         description: Whether to run Datadog tagging step
         default: false
 
+      owner:
+        required: false
+        type: string
+        description: Datadog `owner` tag value
+
+      service:
+        required: false
+        type: string
+        description: Datadog `service` tag value
+
       pip-constraint:
         required: false
         type: string
@@ -102,6 +112,8 @@ jobs:
         with:
           datadog-api-key: ${{ secrets.DD_API_KEY }}
           additional-tags: "env:${{ case(github.ref == 'refs/heads/main', inputs.stage, 'dev') }}"
+          service: ${{ inputs.service }}
+          owner: ${{ inputs.owner }}
 
       - uses: actions/setup-python@v6
         if: inputs.python_version != 'default'
