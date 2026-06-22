@@ -105,7 +105,7 @@ jobs:
       POETRY_HOME: /opt/poetry
       POETRY_SYSTEM_GIT_CLIENT: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           set-safe-directory: true
 
