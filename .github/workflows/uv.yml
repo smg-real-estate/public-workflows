@@ -155,7 +155,7 @@ jobs:
         run: ${{ inputs.pre-install }}
 
       - name: Cache pre-commit
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ env.PRE_COMMIT_HOME }}
           key: ${{runner.os}}-${{runner.arch}}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
