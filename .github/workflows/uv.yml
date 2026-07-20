@@ -115,7 +115,7 @@ jobs:
           service: ${{ inputs.service }}
           owner: ${{ inputs.owner }}
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         if: inputs.python_version != 'default'
         with:
           python-version: ${{ inputs.python_version }}
