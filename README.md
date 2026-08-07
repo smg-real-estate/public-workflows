@@ -20,7 +20,7 @@ It has the following inputs to control its behaviour:
 - `debug` - Use this boolean input to troubleshoot poetry dependencies installation with richer log output (optional)
 - `home` - Allows to override the value of $HOME environment variable, which is set by GitHub when running (optional)
   jobs in a custom Docker image
-- `github_app_id` (and `github_app_private_key` secret) to provide GitHub app credentials used to
+- `github_client_id` (and `github_app_private_key` secret) to provide GitHub app credentials used to
   generate GitHub token that will be used to access GitHub for `git+https://` dependencies (optional)
 
 If you specify `image_name`, don't forget to provide `DOCKER_USERNAME` and `DOCKER_PASSWORD` secrets.
