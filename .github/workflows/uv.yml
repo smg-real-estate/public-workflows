@@ -35,7 +35,7 @@ on:
         type: boolean
         default: false
 
-      github_app_id:
+      github_client_id:
         required: false
         type: string
         description:
@@ -115,7 +115,7 @@ jobs:
           service: ${{ inputs.service }}
           owner: ${{ inputs.owner }}
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         if: inputs.python_version != 'default'
         with:
           python-version: ${{ inputs.python_version }}
@@ -133,17 +133,17 @@ jobs:
           node-version: ${{ inputs.node_version }}
 
       - name: Get token
-        if: ${{ inputs.github_app_id }}
+        if: ${{ inputs.github_client_id }}
         id: gh_token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v1
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
-          app-id: ${{ inputs.github_app_id }}
+          client-id: ${{ inputs.github_client_id }}
           private-key: ${{ secrets.github_app_private_key }}
           owner: ${{ github.repository_owner }}
 
       - name: Add GitHub token
         id: add-token
-        if: ${{ inputs.github_app_id }}
+        if: ${{ inputs.github_client_id }}
         env:
           GITHUB_USER: x-access-token
           GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}

@@ -6,7 +6,7 @@ on:
       runner:
         required: false
         type: string
-        default: ubuntu-22.04
+        default: ubuntu-24.04
         description: GitHub runner for the job
 
       poetry_scripts:
@@ -34,7 +34,7 @@ on:
         type: boolean
         default: false
 
-      github_app_id:
+      github_client_id:
         required: false
         type: string
         description:
@@ -84,7 +84,7 @@ jobs:
       - run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Cache pipx
-        uses: useblacksmith/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             /opt/pipx
@@ -92,9 +92,9 @@ jobs:
           key: ${{runner.os}}-${{runner.arch}}-poetry
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: pipx install poetry==2.4.1
 
-      - uses: useblacksmith/setup-python@v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         if: inputs.python_version != 'default'
         with:
           python-version: ${{ inputs.python_version }}
@@ -104,7 +104,7 @@ jobs:
             pyproject.toml
             poetry.lock
 
-      - uses: useblacksmith/setup-node@v5
+      - uses: actions/setup-node@v7
         if: inputs.node_version
         with:
           node-version: ${{ inputs.node_version }}
@@ -117,17 +117,17 @@ jobs:
           private-key: ${{ secrets.SSH_KEY }}
 
       - name: Get token
-        if: ${{ inputs.github_app_id }}
+        if: ${{ inputs.github_client_id }}
         id: gh_token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v1
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
-          app-id: ${{ inputs.github_app_id }}
+          client-id: ${{ inputs.github_client_id }}
           private-key: ${{ secrets.github_app_private_key }}
           owner: ${{ github.repository_owner }}
 
       - name: Add GitHub token
         id: add-token
-        if: ${{ inputs.github_app_id }}
+        if: ${{ inputs.github_client_id }}
         env:
           GITHUB_USER: x-access-token
           GITHUB_TOKEN: ${{ steps.gh_token.outputs.token }}
@@ -188,7 +188,7 @@ jobs:
           fi
 
       - name: Cache pre-commit
-        uses: useblacksmith/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pre-commit
           key: ${{runner.os}}-${{runner.arch}}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
